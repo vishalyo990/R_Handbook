@@ -1,0 +1,203 @@
+---
+title: "R_HandBook"
+author: "Vishal Kumar"
+date: "September 28, 2017"
+output: html_document
+---
+This handbook contains very bacsis of R programming to advanced level syntax with the example application. Its only created for personel learning.
+
+These are the normal commands in R to operate on different things. These are just for showing sample of a R session.
+
+```{r sample_of_R_session}
+age <- c(6,7,9,4,7,3,2,5,7,8,4,4,7,3,7)
+weight <- c(22, 32.9, 23, 54, 23.7, 23, 43, 23.3, 56, 76, 23.5, 12.5, 23, 34, 45)
+mean <- mean(weight)
+standard_deviation <- sd(weight)
+correlation <- cor(age, weight)
+plot(age, weight)
+q()
+```
+
+Now you can again open your R command window.
+
+Codes for working with the packages in R.
+
+```{r packages_stuff}
+install.packages("vcd")
+library(vcd)
+help(Arthritis)
+Arthritis
+```
+
+
+*Data Structures in R
++Vectors
+Vectors are one dimensional array that are used to hold the variables i.e numeric variable , logical variable, character variable.
+```{r Vectors}
+a <- c(2, 5, 6, 49)
+b <- c("vishal", "vivek",  "neha")
+c <- c(TRUE, FALSE, FALSE, TRUE)
+a[3]
+b[2:3]
+a[c(2,3,4)]
+```
+
++Matrices
+A matrix is a two dimensional array where each element have same node(numeric, character etc.)
+
+```{r Matrix}
+mat <- matrix(c(1:20), nrow = 5, ncol = 4)
+mat[2,]
+mat[, 4]
+mat[1, c(2,4)]
+cells <- c(1, 26, 24, 68)
+rnames <- c("R1", "R2")
+cnames <- c("C1", "C2")
+mymatrix <- matrix(cells, nrow = 2, ncol = 2, byrow = TRUE, dimnames = list(rnames, cnames))
+mymatrix
+
+```
+
+
++Arrays
+Arrays are similar to matrices but can have more than two dimensional. They are created with an array function. 
+ 
+```{r Arrays}
+dim1 <- c("A1", "Á2")
+dim2 <- c("B1", "B2", "B3")
+dim3 <- c("C1", "C2", "C3", "C4")
+arr <- array(1:20, c(2,3,4), dimnames = list(dim1, dim2, dim3) )
+arr
+```
+
+
++Data Frames
+Data frames are the much simpler structure than matrices. It contain rows and coloums and different coloumn of data frame can contain different types of data frames.
+
+```{r Data_Frames}
+patientId <- c(1,2,3,4)
+age <- c(23,32,12,14)
+diabetes<- c("type1", "type2", "type2", "type1")
+status <- c("improved", "same", "poor", "improved")
+patientData <- data.frame(patientId, age, diabetes, status)
+patientData
+patientData[2,4]
+patientData[, 3]
+```
+
+
+
++Factors
+Factors are 
+
+
+
+
+
+#Simple linear regression
+In simple linear regression we fit a linear models and predict response variable from predicting variable.
+
+```{r linear_regression}
+fit <- lm(weight ~ height, data = women)
+summary(fit)
+women$weight
+fitted(fit)
+plot(women$height, women$weight, xlab = "weigth of womens", ylab = "height of womens")
+abline(fit)
+
+```
+
+
+#Polynomial regression
+We can fit quadratic equation to the model to improve our model.
+
+```{r ploynomial_regression}
+fit2 <- lm(weight ~ height + I(height^2), data = women)
+summary(fit2)
+plot(women$height, women$weight, xlab = "WH", ylab = "WW")
+lines(women$height, fitted(fit2))
+```
+
+
+We can also fit cubic equation to our models.
+
+```{r cubical_regression}
+fit3 <- lm(weight ~ height + I(height^2) + I(height^3), data = women)
+summary(fit3)
+plot(women$height, women$weight, xlab = "WH(in inches)", ylab = "WW(in kgs)")
+lines(women$height, fitted(fit3))
+```
+
+
+#Multiple Regression
+In multiple regression we more than one predictor variables for the prediction of respomse variable.
+
+```{r Multiple_regression}
+fit <- lm(mpg ~ hp + wt, data = mtcars)
+summary(fit)
+
+```
+
+```{r mul_lin_reg_withInteraction}
+fit <- lm(mpg ~ hp + wt + hp:wt, data = mtcars)
+summary(fit)
+library(effects)
+plot(effects("hp:wt", fit, list(wt = c(2.2, 3.2, 4.2))), multiline = TRUE)
+```
+
+
+```{r bagged_loess}
+install.packages("ElemSTatLearn")
+library(ElemStatLearn)
+data(ozone, package = "ElemStatLearn")
+ozone <- ozone[order(ozone$ozone), ]
+head(ozone)
+ll <- matrix(NA, nrow, ncol = 155)
+for(i in 1:10){
+  ss <- sample(1:dim(ozone)[1], replace = T)
+ozone0 <- ozone[ss,]; ozone0 <- ozone0[order(ozone0)$ozone, ]
+loess0 <- loess(temprature ~ ozone, data = ozone0, span = 0.2)
+ll[i,] <- predict(loess0, newdata = data.frame(ozone = 1:155))
+}
+
+```
+
+
+
+```{r Bagged_loess_plot}
+plot(ozone$ozone, ozone$tempreature, pch = 19, cex = 0.5)
+for(i in 1:10){
+  lines(1:155, ll[i,], col = "grey", lwd = 2)
+}
+lines(1:155, apply(ll, 2, mean), col = "red", lwd = 2)
+
+```
+
+```{r bagging_tree}
+data("iris")
+library(ipred)
+bagTree <- bagging(Species ~ ., data = iris, coob = TRUE)
+print(bagTree)
+bagTree$mtrees[[2]]$btree
+
+```
+
+
+```{r random_forest_bagging}
+
+library(randomForest)
+forestIris <- randomForest(Species ~ Petal.Width+petal.length, data = iris, prox = TRUE)
+forestIris
+getTree(forestIris, k = 2)
+
+
+iris.p <- classCenter(iris[, c(3, 4)], iris$Species, forestIris$prox)
+plot(iris[,3], iris[, 4], pch = 21, xlab = names(iris)[3], ylab = names(iris)[4],
+     bg = c("red", "blue", "green")[as.numeric(factor(iris$Species))],
+     main = "Iris  Data Prototypes"
+)
+points(iris.p[,1], iris.p[,2], pch = 21, cex = 2, bg = c("red", "blue", "green"))
+```
+
+
+
